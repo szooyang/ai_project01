@@ -1,5 +1,5 @@
 # main.py
-import streamlit as s
+import streamlit as st
 
 st.set_page_config(page_title="MBTI 기반 진로 추천", page_icon="🎯", layout="centered")
 

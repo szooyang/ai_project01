@@ -6,7 +6,7 @@ from folium.plugins import MarkerCluster
 st.set_page_config(page_title="Seoul Top 10 Attractions", layout="wide")
 
 st.title("🌏 외국인이 좋아하는 서울 주요 관광지 TOP 10")
-st.markdown("이 지도는 서울의 인기 관광지를 Folium으로 시각화합니다. (영문/한글 병기)")
+st.markdown("서울의 대표 명소를 Folium 지도로 시각화했습니다. (영문/한글 병기)")
 
 # 관광지 데이터
 attractions = [
@@ -22,23 +22,30 @@ attractions = [
     {"name": "Changdeokgung Palace (창덕궁)", "lat": 37.579414, "lon": 126.991058, "desc": "UNESCO World Heritage Site with a secret garden."}
 ]
 
-# Folium 지도 생성
-m = folium.Map(location=[37.5665, 126.9780], zoom_start=12, tiles="CartoDB positron")
+# 지도 생성 (컬러 지도)
+m = folium.Map(location=[37.5665, 126.9780], zoom_start=12, tiles="OpenStreetMap")
 
 # 마커 클러스터 추가
 marker_cluster = MarkerCluster().add_to(m)
 
+# 마커 추가 (빨간색 아이콘)
 for spot in attractions:
     folium.Marker(
         location=[spot["lat"], spot["lon"]],
         popup=f"<b>{spot['name']}</b><br>{spot['desc']}",
-        tooltip=spot["name"]
+        tooltip=spot["name"],
+        icon=folium.Icon(color="red", icon="info-sign")
     ).add_to(marker_cluster)
 
-# 지도 표시
-st_data = st_folium(m, width=900, height=600)
+# 지도 출력 (크기 축소)
+st_data = st_folium(m, width=630, height=420)
 
-# 코드 표시
+# 관광지 설명 테이블
+st.markdown("### 🗺️ 관광지 간단 설명")
+for i, spot in enumerate(attractions, start=1):
+    st.markdown(f"**{i}. {spot['name']}** — {spot['desc']}")
+
+# 코드 보기
 with st.expander("💾 앱 코드 보기 / Copy the full app code"):
     st.code(open(__file__, "r").read(), language="python")
 

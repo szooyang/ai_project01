@@ -42,15 +42,16 @@ spots = [
      "desc": "실내외 놀이시설이 있는 서울의 대표 테마파크예요."},
 ]
 
-# 지도 생성 (색상 포함)
+# 지도 생성
 m = folium.Map(location=[37.5665, 126.9780], zoom_start=12, tiles="OpenStreetMap")
 
 # 마커 추가 (노란색)
 for spot in spots:
+    tooltip_text = f"{spot['name']} 🚇 {spot['station']}"
     popup_html = f"<b>{spot['name']}</b><br>{spot['desc']}<br><i>🚇 {spot['station']}</i>"
     folium.Marker(
         [spot["lat"], spot["lon"]],
-        tooltip=spot["name"],
+        tooltip=tooltip_text,
         popup=popup_html,
         icon=folium.Icon(color="orange", icon="info-sign"),
     ).add_to(m)
@@ -59,7 +60,7 @@ for spot in spots:
 st.markdown("### 🗺️ 서울 관광지도")
 st_folium(m, width=720, height=480)
 
-# 관광지 소개 섹션
+# 관광지 소개
 st.markdown("---")
 st.markdown("### 📍 관광지 간단 소개")
 

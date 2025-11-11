@@ -2,12 +2,12 @@ import streamlit as st
 import folium
 from streamlit_folium import st_folium
 from folium.plugins import MarkerCluster
-import random
+import math
 
-st.set_page_config(page_title="서울 관광 일정 플래너", layout="wide")
+st.set_page_config(page_title="서울 여행 일정 플래너", layout="wide")
 
-st.title("🌏 외국인이 좋아하는 서울 주요 관광지 TOP 10")
-st.markdown("서울의 대표 관광지 10곳을 한눈에 보고, 여행 일정을 자동으로 만들어보세요!")
+st.title("🌏 서울 주요 관광지 기반 최적 여행 일정 플래너")
+st.markdown("서울의 인기 관광지를 기반으로, 이동 동선을 고려한 최적 여행 일정을 자동으로 구성합니다.")
 
 # 관광지 데이터
 attractions = [
@@ -43,13 +43,25 @@ attractions = [
      "subway": "3호선 안국역"}
 ]
 
+# 거리 계산 함수 (단순 유클리드 거리)
+def distance(a, b):
+    return math.sqrt((a["lat"] - b["lat"])**2 + (a["lon"] - b["lon"])**2)
+
+# 간단한 최근접 탐색 기반 경로 최적화 (탐욕 알고리즘)
+def optimize_route(spots):
+    route = [spots[0]]
+    remaining = spots[1:]
+    while remaining:
+        nearest = min(remaining, key=lambda x: distance(route[-1], x))
+        route.append(nearest)
+        remaining.remove(nearest)
+    return route
+
 # 지도 생성
 m = folium.Map(location=[37.5665, 126.9780], zoom_start=12, tiles="OpenStreetMap")
-
-# 마커 클러스터 추가
 marker_cluster = MarkerCluster().add_to(m)
 
-# 마커 추가 (빨간색 아이콘)
+# 마커 표시
 for spot in attractions:
     folium.Marker(
         location=[spot["lat"], spot["lon"]],
@@ -58,27 +70,47 @@ for spot in attractions:
         icon=folium.Icon(color="red", icon="info-sign")
     ).add_to(marker_cluster)
 
-# 지도 출력 (크기 축소)
-st_data = st_folium(m, width=630, height=420)
+st_folium(m, width=630, height=420)
 
-# 관광지 설명 리스트
-st.markdown("### 🗺️ 관광지 정보 요약")
-for i, spot in enumerate(attractions, start=1):
-    st.markdown(f"**{i}. {spot['name']}** — {spot['desc']}  \n🚇 **가까운 전철역:** {spot['subway']}")
-
-# 여행 일정 생성기
+# 여행일 선택
 st.markdown("---")
-st.subheader("📅 여행 일정 만들기")
+st.subheader("📅 여행 일정 자동 생성기")
+days = st.slider("여행 일수를 선택하세요 (1~3일)", 1, 3, 2)
 
-days = st.slider("여행 일수를 선택하세요 (1~3일)", min_value=1, max_value=3, value=2)
+# 일정 계산
+optimized = optimize_route(attractions)
+spots_per_day = len(optimized) // days
 
-# 일정 생성 (10개 명소를 일수로 균등 분배)
-spots_per_day = len(attractions) // days
-random.shuffle(attractions)
-
+# 각 일자별 일정 출력
 for d in range(days):
-    st.markdown(f"#### ✨ {d+1}일차 일정")
+    st.markdown(f"## ✨ {d+1}일차 일정")
     start = d * spots_per_day
-    end = (d + 1) * spots_per_day if d < days - 1 else len(attractions)
-    for spot in attractions[start:end]:
-        st.markdown(f"- {spot['name']}  \n  🚇 {spot['subway']}  \n  💬 {spot['desc']}")
+    end = (d + 1) * spots_per_day if d < days - 1 else len(optimized)
+    today_spots = optimized[start:end]
+    
+    # 오전 / 점심 / 오후 / 저녁 / 야간 일정 분할
+    morning = today_spots[:2]
+    afternoon = today_spots[2:4] if len(today_spots) > 3 else today_spots[2:]
+    evening = today_spots[4:] if len(today_spots) > 4 else []
+    
+    st.markdown("### ☀️ 오전 일정")
+    for s in morning:
+        st.markdown(f"- {s['name']} (🚇 {s['subway']}) — {s['desc']}")
+    
+    st.markdown("🍽 **점심식사** — 인근 맛집 또는 한식당에서 점심 식사")
+    
+    st.markdown("### 🌇 오후 일정")
+    for s in afternoon:
+        st.markdown(f"- {s['name']} (🚇 {s['subway']}) — {s['desc']}")
+    
+    st.markdown("🍴 **저녁식사** — 주변 맛집 탐방 및 휴식")
+    
+    st.markdown("### 🌙 야간 일정")
+    if evening:
+        for s in evening:
+            st.markdown(f"- {s['name']} (🚇 {s['subway']}) — {s['desc']}")
+    else:
+        st.markdown("- 자유 시간 또는 숙소 주변 산책")
+
+st.markdown("---")
+st.success("🎉 일정이 생성되었습니다! 각 일정은 이동 동선을 고려해 최적으로 정렬되었습니다.")

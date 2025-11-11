@@ -43,7 +43,7 @@ for spot in spots:
         icon=folium.Icon(color="yellow", icon="info-sign")
     ).add_to(m)
 
-# 지도 표시 (크기 70%)
+# 지도 표시 (70%)
 st_folium(m, width=800, height=450)
 
 # 관광지 소개
@@ -59,11 +59,23 @@ days = st.slider("여행할 일수를 선택하세요 (1~3일)", 1, 3, 2)
 st.markdown("---")
 st.markdown(f"### ✨ {days}일 동안의 서울 여행 일정 추천")
 
-# 관광지 나누기
 spots_per_day = math.ceil(len(spots) / days)
+time_slots = ["09:00", "10:30", "12:00", "13:00", "14:30", "16:00", "17:30"]
+
 for d in range(days):
     st.markdown(f"#### 📅 Day {d+1}")
     start = d * spots_per_day
     end = start + spots_per_day
-    for spot in spots[start:end]:
-        st.markdown(f"- **{spot['name']}** ({spot['station']})  — {spot['desc']}")
+    selected_spots = spots[start:end]
+    
+    time_index = 0
+    for i, spot in enumerate(selected_spots):
+        # 점심시간 넣기
+        if time_slots[time_index] == "12:00":
+            st.markdown("🍽️ **12:00 ~ 13:00 점심식사 시간** — 서울의 맛집에서 여유롭게 식사하세요!")
+            time_index += 1
+        st.markdown(f"🕘 **{time_slots[time_index]} ~ {time_slots[time_index+1]}** — "
+                    f"**{spot['name']}** ({spot['station']})  \n👉 {spot['desc']}")
+        time_index += 1
+        if time_index >= len(time_slots) - 1:
+            time_index = 0  # 하루 일정 시간 슬롯 초기화
